@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>問題解決ナビ — Mondai Solver Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Zen+Kaku+Gothic+New:wght@400;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #f5f0e8;
+  --warm-white: #faf8f4;
+  --terracotta: #c8624a;
+  --terracotta-dark: #a84e3a;
+  --terracotta-light: #e88870;
+  --ink: #2a2118;
+  --ink-light: #5a4e42;
+  --sand: #e8dece;
+  --sand-dark: #cfc3b0;
+  --moss: #6b7c5a;
+  --sky: #5a7a8c;
+  --gold: #c09a4a;
+  --phase-0: #c8624a;
+  --phase-1: #6b7c5a;
+  --phase-2: #5a7a8c;
+  --phase-3: #c09a4a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--ink);
+  color: var(--cream);
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 16px rgba(42,33,24,0.3);
+}
+.header-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.header-title .en {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--sand-dark);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.header-title .ja {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.api-key-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.api-key-wrap label {
+  font-size: 11px;
+  font-family: 'DM Mono', monospace;
+  color: var(--sand-dark);
+  letter-spacing: 0.1em;
+}
+.api-key-wrap input {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: var(--cream);
+  padding: 6px 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  border-radius: 4px;
+  width: 240px;
+}
+.api-key-wrap input:focus { outline: 1px solid var(--terracotta-light); }
+
+/* ── PHASE NAV ── */
+.phase-nav {
+  display: flex;
+  background: var(--ink);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 0 32px;
+  gap: 0;
+  overflow-x: auto;
+}
+.phase-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(245,240,232,0.45);
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+  user-select: none;
+}
+.phase-tab:hover { color: var(--cream); }
+.phase-tab.active { color: var(--cream); }
+.phase-tab[data-phase="0"].active { border-bottom-color: var(--phase-0); }
+.phase-tab[data-phase="1"].active { border-bottom-color: var(--phase-1); }
+.phase-tab[data-phase="2"].active { border-bottom-color: var(--phase-2); }
+.phase-tab[data-phase="3"].active { border-bottom-color: var(--phase-3); }
+.phase-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  background: rgba(255,255,255,0.12);
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+}
+
+/* ── MAIN ── */
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.phase-panel { display: none; }
+.phase-panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── SECTION TITLE ── */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--sand-dark);
+}
+.section-head .badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 3px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.ph0 .badge { background: var(--phase-0); color: #fff; }
+.ph1 .badge { background: var(--phase-1); color: #fff; }
+.ph2 .badge { background: var(--phase-2); color: #fff; }
+.ph3 .badge { background: var(--phase-3); color: #fff; }
+
+.section-head h2 {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 22px;
+  font-weight: 700;
+}
+.section-head .sub {
+  font-size: 13px;
+  color: var(--ink-light);
+  margin-left: auto;
+  font-family: 'DM Mono', monospace;
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--warm-white);
+  border: 1px solid var(--sand-dark);
+  border-radius: 10px;
+  padding: 22px 24px;
+  margin-bottom: 20px;
+}
+.card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-light);
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+/* ── INPUTS ── */
+.field-group { display: flex; flex-direction: column; gap: 16px; }
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-light);
+  letter-spacing: 0.05em;
+}
+.field input, .field textarea, .field select {
+  background: var(--cream);
+  border: 1.5px solid var(--sand-dark);
+  color: var(--ink);
+  padding: 10px 14px;
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 14px;
+  border-radius: 6px;
+  transition: border-color 0.2s;
+  resize: vertical;
+}
+.field input:focus, .field textarea:focus, .field select:focus {
+  outline: none;
+  border-color: var(--terracotta);
+}
+.field textarea { min-height: 80px; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border: none;
+  border-radius: 6px;
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.03em;
+}
+.btn-primary {
+  background: var(--terracotta);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--terracotta-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(200,98,74,0.35); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-secondary {
+  background: var(--sand);
+  color: var(--ink);
+  border: 1.5px solid var(--sand-dark);
+}
+.btn-secondary:hover { background: var(--sand-dark); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink-light);
+  border: 1.5px solid var(--sand-dark);
+}
+.btn-ghost:hover { border-color: var(--terracotta-light); color: var(--terracotta); }
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+/* ── MANDALA GRID ── */
+.mandala-input-area {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+.mandala-input-area .field { flex: 1; }
+.mandala-input-area .field input { font-size: 16px; font-weight: 700; }
+
+.mandala-grid-wrap {
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+.mandala-grid {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(72px, 1fr));
+  gap: 3px;
+  width: 100%;
+}
+.mandala-cell {
+  aspect-ratio: 1;
+  border: 1.5px solid var(--sand-dark);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: clamp(9px, 1.1vw, 12px);
+  line-height: 1.3;
+  padding: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  background: var(--warm-white);
+  word-break: break-all;
+}
+.mandala-cell:hover { border-color: var(--terracotta-light); background: #fff; }
+.mandala-cell.center-main {
+  background: var(--ink);
+  color: var(--cream);
+  font-weight: 700;
+  font-size: 12px;
+  border-color: var(--ink);
+  cursor: default;
+}
+.mandala-cell.center-sub {
+  background: var(--terracotta);
+  color: #fff;
+  font-weight: 700;
+  font-size: 11px;
+  border-color: var(--terracotta-dark);
+}
+.mandala-cell.sub-center {
+  background: #fff;
+  border-color: var(--terracotta-light);
+  font-weight: 700;
+  color: var(--terracotta-dark);
+}
+.mandala-cell.flagged {
+  background: rgba(192,154,74,0.15);
+  border-color: var(--gold);
+}
+.mandala-cell.flagged::after {
+  content: '★';
+  position: absolute;
+  top: 2px; right: 3px;
+  font-size: 8px;
+  color: var(--gold);
+}
+.mandala-cell.empty-slot {
+  background: var(--cream);
+  color: var(--sand-dark);
+  font-size: 16px;
+  border-style: dashed;
+}
+
+/* axis labels */
+.axis-labels {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+  min-width: 600px;
+}
+.axis-label {
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  text-align: center;
+  color: var(--ink-light);
+  padding: 2px;
+  background: var(--sand);
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+}
+
+/* loading spinner */
+.spinner {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── HEARING FORM ── */
+.hearing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 640px) { .hearing-grid { grid-template-columns: 1fr; } }
+
+/* ── GOAL CARDS ── */
+.goal-box {
+  background: var(--cream);
+  border: 1.5px dashed var(--sand-dark);
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 100px;
+  font-size: 14px;
+  color: var(--ink-light);
+  cursor: text;
+}
+.goal-box[contenteditable="true"]:focus {
+  outline: none;
+  border-color: var(--sky);
+  background: #fff;
+  color: var(--ink);
+}
+
+/* ── MATRIX ── */
+.matrix-wrap {
+  position: relative;
+  padding: 16px;
+}
+.matrix-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 12px;
+  min-height: 320px;
+}
+.matrix-quad {
+  border-radius: 8px;
+  padding: 14px;
+  min-height: 140px;
+  position: relative;
+}
+.matrix-quad .quad-label {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.quad-A { background: rgba(200,98,74,0.12); border: 1.5px solid rgba(200,98,74,0.3); }
+.quad-A .quad-label { color: var(--terracotta); }
+.quad-B { background: rgba(107,124,90,0.1); border: 1.5px solid rgba(107,124,90,0.25); }
+.quad-B .quad-label { color: var(--moss); }
+.quad-C { background: rgba(192,154,74,0.1); border: 1.5px solid rgba(192,154,74,0.25); }
+.quad-C .quad-label { color: var(--gold); }
+.quad-D { background: rgba(90,122,140,0.08); border: 1.5px solid rgba(90,122,140,0.2); }
+.quad-D .quad-label { color: var(--sky); }
+.matrix-axis-x, .matrix-axis-y {
+  position: absolute;
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  color: var(--ink-light);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.matrix-axis-x { bottom: 0; left: 50%; transform: translateX(-50%); }
+.matrix-axis-y { top: 50%; left: 0; transform: translateY(-50%) rotate(-90deg); transform-origin: left center; }
+
+.打ち手-tag {
+  display: inline-block;
+  background: var(--sand);
+  border: 1px solid var(--sand-dark);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+  margin: 3px 3px 3px 0;
+  cursor: grab;
+}
+.打ち手-tag.app-flag {
+  background: rgba(200,98,74,0.12);
+  border-color: var(--terracotta-light);
+  color: var(--terracotta-dark);
+}
+
+/* ── OUTPUT AREA ── */
+.output-box {
+  background: var(--cream);
+  border: 1.5px solid var(--sand-dark);
+  border-radius: 8px;
+  padding: 18px;
+  font-size: 14px;
+  line-height: 1.7;
+  min-height: 80px;
+  white-space: pre-wrap;
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  color: var(--ink);
+}
+.output-box.streaming { border-color: var(--terracotta-light); }
+.output-box.empty { color: var(--sand-dark); font-style: italic; }
+
+/* ── PROGRESS DOTS ── */
+.phase-progress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.progress-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--sand-dark);
+  transition: background 0.3s;
+}
+.progress-dot.done { background: var(--moss); }
+.progress-dot.active { background: var(--terracotta); box-shadow: 0 0 0 3px rgba(200,98,74,0.2); }
+.progress-line {
+  width: 28px; height: 2px;
+  background: var(--sand-dark);
+}
+.progress-label {
+  font-size: 11px;
+  color: var(--ink-light);
+  font-family: 'DM Mono', monospace;
+}
+
+/* ── INTERVIEW QUESTIONS ── */
+.interview-q {
+  margin-bottom: 18px;
+}
+.interview-q .q-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--terracotta);
+  margin-bottom: 6px;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.05em;
+}
+.interview-q .q-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+.interview-q textarea {
+  width: 100%;
+  background: var(--cream);
+  border: 1.5px solid var(--sand-dark);
+  color: var(--ink);
+  padding: 10px 14px;
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 14px;
+  border-radius: 6px;
+  min-height: 72px;
+  resize: vertical;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.interview-q textarea:focus { outline: none; border-color: var(--terracotta); }
+.axis-tag {
+  display: inline-block;
+  background: var(--terracotta);
+  color: #fff;
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+}
+
+/* ── NOTICE BOX ── */
+.notice {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  align-items: flex-start;
+}
+.notice.info { background: rgba(90,122,140,0.1); border: 1px solid rgba(90,122,140,0.25); color: var(--sky); }
+.notice.warn { background: rgba(192,154,74,0.12); border: 1px solid rgba(192,154,74,0.3); color: #8a6e2a; }
+.notice-icon { flex-shrink: 0; font-size: 15px; }
+
+/* ── SNAPSHOT CARD ── */
+.snapshot-card {
+  background: var(--ink);
+  color: var(--cream);
+  border-radius: 10px;
+  padding: 28px 28px 24px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.snapshot-card::before {
+  content: '📸';
+  position: absolute;
+  top: -10px; right: 16px;
+  font-size: 64px;
+  opacity: 0.08;
+}
+.snapshot-card .snap-title {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--cream);
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+}
+.snapshot-card .snap-date {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--sand-dark);
+  margin-bottom: 16px;
+  letter-spacing: 0.1em;
+}
+.snapshot-card .snap-body {
+  font-size: 14px;
+  color: rgba(245,240,232,0.85);
+  line-height: 1.8;
+  border-left: 3px solid var(--terracotta);
+  padding-left: 14px;
+  margin-bottom: 20px;
+}
+.snapshot-card .snap-label {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  color: var(--sand-dark);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.snapshot-card textarea {
+  width: 100%;
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  color: var(--cream);
+  padding: 12px 14px;
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 14px;
+  border-radius: 6px;
+  min-height: 100px;
+  resize: vertical;
+  box-sizing: border-box;
+  line-height: 1.7;
+}
+.snapshot-card textarea::placeholder { color: rgba(245,240,232,0.3); }
+.snapshot-card textarea:focus {
+  outline: none;
+  border-color: var(--terracotta-light);
+  background: rgba(255,255,255,0.1);
+}
+.snap-hint {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: rgba(200,98,74,0.2);
+  border-radius: 6px;
+  font-size: 12px;
+  color: rgba(245,240,232,0.7);
+  line-height: 1.6;
+}
+
+/* ── APP SPEC OUTPUT ── */
+.spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.spec-table th {
+  background: var(--ink);
+  color: var(--cream);
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.spec-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--sand-dark);
+  vertical-align: top;
+}
+.spec-table tr:nth-child(even) td { background: rgba(232,222,206,0.4); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">
+    <span class="en">QuestQueries #023 — Problem Solving Navigator</span>
+    <span class="ja">問題解決ナビゲーター</span>
+  </div>
+  <div class="api-key-wrap">
+    <label>API KEY</label>
+    <input type="password" id="apiKey" placeholder="sk-ant-..." />
+  </div>
+</header>
+
+<nav class="phase-nav">
+  <div class="phase-tab active" data-phase="0" onclick="switchPhase(0)">
+    <span class="phase-num">PH.0</span>マンダラ・ブレスト
+  </div>
+  <div class="phase-tab" data-phase="1" onclick="switchPhase(1)">
+    <span class="phase-num">PH.1</span>ヒアリング
+  </div>
+  <div class="phase-tab" data-phase="2" onclick="switchPhase(2)">
+    <span class="phase-num">PH.2</span>ゴール設定
+  </div>
+  <div class="phase-tab" data-phase="3" onclick="switchPhase(3)">
+    <span class="phase-num">PH.3</span>打ち手 → 要件定義
+  </div>
+</nav>
+
+<main>
+
+<!-- ─── PHASE 0：MANDALA BRAINSTORM ─── -->
+<section class="phase-panel active" id="panel-0">
+  <div class="section-head ph0">
+    <span class="badge">Phase 0</span>
+    <h2>マンダラ・ブレインストーミング</h2>
+    <span class="sub">Mandala Brainstorm</span>
+  </div>
+
+  <!-- STEP A: テーマ入力 -->
+  <div class="card" id="step-a-card">
+    <div class="card-title">Step A — テーマ入力</div>
+    <div class="notice info">
+      <span class="notice-icon">💡</span>
+      <span>まず課題のテーマを一言で入力してください。次に文脈を2問ヒアリングして、あなたの状況に合った軸でマンダラを展開します。</span>
+    </div>
+    <div class="mandala-input-area">
+      <div class="field">
+        <label>解決したいテーマ / 中心課題</label>
+        <input type="text" id="mandalaTheme" placeholder="例：営業チームの成約率が低い" />
+      </div>
+      <button class="btn btn-primary" id="interviewBtn" onclick="startInterview()">
+        <span id="interviewBtnText">文脈をヒアリング →</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP B: AIが2問ヒアリング -->
+  <div class="card" id="step-b-card" style="display:none;">
+    <div class="card-title">Step B — 文脈の確認</div>
+    <div id="interview-questions"><!-- AIが生成した質問がここに入る --></div>
+    <div class="btn-row" style="margin-top:20px;">
+      <button class="btn btn-ghost" onclick="backToStepA()">← テーマを変える</button>
+      <button class="btn btn-primary" id="expandBtn" onclick="expandMandala()">
+        <span id="expandBtnText">この内容でマンダラを展開する</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP C: マンダラグリッド -->
+  <div class="card" id="step-c-card" style="display:none;">
+    <div class="card-title">Step C — マンダラ展開</div>
+    <div id="axisTagRow" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;"></div>
+    <div class="mandala-grid-wrap">
+      <div class="mandala-grid" id="mandalaGrid"></div>
+    </div>
+    <div id="mandalaStatus" class="output-box empty" style="min-height:40px; margin-top:8px;">
+      展開中...
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="clearFlags()">★フラグをリセット</button>
+      <button class="btn btn-primary" onclick="proceedToPhase1()">フラグ選択完了 → ヒアリングへ</button>
+    </div>
+  </div>
+
+  <div class="card" id="flagSummaryCard" style="display:none;">
+    <div class="card-title">★ 打ち手候補（フラグ済み）</div>
+    <div id="flagSummaryList"></div>
+  </div>
+</section>
+
+<!-- ─── PHASE 1：HEARING ─── -->
+<section class="phase-panel" id="panel-1">
+  <div class="section-head ph1">
+    <span class="badge">Phase 1</span>
+    <h2>ヒアリング</h2>
+    <span class="sub">Hearing</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">ブレストからの引き継ぎ</div>
+    <div id="inheritedTheme" class="output-box empty">Phase 0 を完了するとここに引き継がれます。</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">ヒアリング情報</div>
+    <div class="field-group">
+      <div class="hearing-grid">
+        <div class="field">
+          <label>WHO（誰の課題か）</label>
+          <input type="text" id="hearWho" placeholder="例：営業チームのリーダー田中さん" />
+        </div>
+        <div class="field">
+          <label>いつ頃から？（背景）</label>
+          <input type="text" id="hearWhen" placeholder="例：今期Q2から顕著に低下" />
+        </div>
+      </div>
+      <div class="field">
+        <label>【課題】悩みや困り事</label>
+        <textarea id="hearProblem" placeholder="例：商談はある程度入るが、クロージングで失注が多い。提案の質の問題なのか、タイミングの問題なのか判断できていない。"></textarea>
+      </div>
+      <div class="field">
+        <label>【理想状態】〜〜〜〜〜〜〜</label>
+        <textarea id="hearIdeal" placeholder="例：3ヶ月以内に成約率を現状の25%から35%に改善したい。"></textarea>
+      </div>
+      <div class="field">
+        <label>これまでに試したこと（あれば）</label>
+        <textarea id="hearTried" placeholder="例：ロープレを週1回実施。SFAツール導入済み。"></textarea>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="switchPhase(0)">← Phase 0 に戻る</button>
+      <button class="btn btn-primary" onclick="proceedToPhase2()">ゴール設定へ →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ─── PHASE 2：GOAL SETTING ─── -->
+<section class="phase-panel" id="panel-2">
+  <div class="section-head ph2">
+    <span class="badge">Phase 2</span>
+    <h2>ゴールの設定</h2>
+    <span class="sub">Goal Setting</span>
+  </div>
+
+  <div class="notice info">
+    <span class="notice-icon">🎯</span>
+    <span>ヒアリング内容を元にAIがゴールと要件の初稿を提案します。編集して確定させましょう。</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">WHO（課題オーナー）</div>
+    <div id="goal-who" class="goal-box" contenteditable="true">Phase 1 を完了するとここに引き継がれます。</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">【課題】悩みや困り事</div>
+    <div id="goal-problem" class="goal-box" contenteditable="true"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">【理想状態】</div>
+    <div id="goal-ideal" class="goal-box" contenteditable="true"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">AIによる仮説生成</div>
+    <button class="btn btn-primary" id="hypothesisBtn" onclick="generateHypothesis()">
+      <span id="hypothesisBtnText">仮説を生成する</span>
+    </button>
+    <div id="hypothesisOutput" class="output-box empty" style="margin-top:12px;">ボタンを押すと生成されます。</div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="switchPhase(1)">← Phase 1 に戻る</button>
+    <button class="btn btn-primary" onclick="proceedToPhase3()">打ち手・要件定義へ →</button>
+  </div>
+</section>
+
+<!-- ─── PHASE 3：打ち手 → 要件定義 ─── -->
+<section class="phase-panel" id="panel-3">
+  <div class="section-head ph3">
+    <span class="badge">Phase 3</span>
+    <h2>打ち手 → 要件定義</h2>
+    <span class="sub">Actions → Requirements</span>
+  </div>
+
+  <div class="notice warn">
+    <span class="notice-icon">⚡</span>
+    <span>アプリ対応可能な打ち手を特定し、要件定義の初稿を生成します。（API Call 2）</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">打ち手の評価マトリックス</div>
+    <p style="font-size:13px; color:var(--ink-light); margin-bottom:16px;">効果（縦軸）× 実行しやすさ（横軸）で打ち手を分類します。</p>
+    <button class="btn btn-primary" id="matrixBtn" onclick="generateMatrix()">
+      <span id="matrixBtnText">AIで打ち手を分類する</span>
+    </button>
+
+    <div style="margin-top:16px;" id="matrixWrap">
+      <div class="matrix-wrap">
+        <div class="matrix-grid">
+          <div class="matrix-quad quad-A">
+            <div class="quad-label">A: 最優先 🔥<br><span style="font-weight:400; font-size:10px;">効果高 × やりやすい</span></div>
+            <div id="quad-A"></div>
+          </div>
+          <div class="matrix-quad quad-B">
+            <div class="quad-label">B: 要計画 📋<br><span style="font-weight:400; font-size:10px;">効果高 × 難しい</span></div>
+            <div id="quad-B"></div>
+          </div>
+          <div class="matrix-quad quad-C">
+            <div class="quad-label">C: 即実行 ✅<br><span style="font-weight:400; font-size:10px;">効果低 × やりやすい</span></div>
+            <div id="quad-C"></div>
+          </div>
+          <div class="matrix-quad quad-D">
+            <div class="quad-label">D: 保留 🗂<br><span style="font-weight:400; font-size:10px;">効果低 × 難しい</span></div>
+            <div id="quad-D"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">アプリ要件定義（初稿）</div>
+    <button class="btn btn-primary" id="specBtn" onclick="generateSpec()">
+      <span id="specBtnText">要件定義を生成する</span>
+    </button>
+    <div id="specOutput" style="margin-top:16px;"></div>
+  </div>
+
+  <!-- SNAPSHOT CARD -->
+  <div class="snapshot-card">
+    <div class="snap-title">📸 これは、今日時点のスナップショットです</div>
+    <div class="snap-date" id="snapDate">— / — / —</div>
+    <div class="snap-body">
+      ここまでの整理は「出発点」であって「答え」ではありません。<br>
+      お風呂・散歩・ご飯のあと、眠れない夜に<br>
+      <strong>「あ、違うかも」と思ったら、それが本物です。</strong><br>
+      このドキュメントは、いつでも書き換えていい。
+    </div>
+    <div class="snap-label">帰ってから気づいたこと・変わったこと</div>
+    <textarea id="snapMemo" placeholder="散歩中に気づいたこと、翌朝ひらめいたこと、「やっぱり違う」と思ったこと…&#10;何でもここに書き足してください。"></textarea>
+    <div class="snap-hint">
+      <span>💡</span>
+      <span>ひらめきはフォーマットの外からやってくる。この欄は「未完了を歓迎する場所」です。書いたらエクスポートして保存しておきましょう。</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">エクスポート</div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="exportMarkdown()">📄 Markdown でエクスポート（スナップショット込み）</button>
+      <button class="btn btn-ghost" onclick="resetAll()">🔄 最初からやり直す</button>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ── STATE ──
+const state = {
+  apiKey: '',
+  theme: '',
+  mandala: { cells: [], flagged: new Set() },
+  hearing: { who: '', when: '', problem: '', ideal: '', tried: '' },
+  hypothesis: '',
+  matrix: { A:[], B:[], C:[], D:[] },
+  spec: ''
+};
+
+// Axis labels for mandala
+const AXES = ['ヒト','組織','モノ','情報','時間','資金','環境','仕組み'];
+
+// ── INIT EMPTY MANDALA ──
+function initMandala() {
+  const grid = document.getElementById('mandalaGrid');
+  grid.innerHTML = '';
+  // 9x9 = 81 cells
+  for (let row = 0; row < 9; row++) {
+    for (let col = 0; col < 9; col++) {
+      const cell = document.createElement('div');
+      cell.className = 'mandala-cell empty-slot';
+      cell.dataset.row = row;
+      cell.dataset.col = col;
+      const idx = row * 9 + col;
+      cell.dataset.idx = idx;
+
+      const blockRow = Math.floor(row / 3);
+      const blockCol = Math.floor(col / 3);
+      const isCenter = (row % 3 === 1 && col % 3 === 1);
+      const isCenterBlock = (blockRow === 1 && blockCol === 1);
+      const isSubCenter = isCenter && !isCenterBlock;
+
+      if (isCenterBlock && isCenter) {
+        cell.className = 'mandala-cell center-main';
+        cell.textContent = '—';
+      } else if (isCenter) {
+        const axisIdx = blockRow * 3 + blockCol;
+        const adjustedIdx = axisIdx > 4 ? axisIdx - 1 : axisIdx;
+        cell.className = 'mandala-cell center-sub';
+        const axisArr = state.dynamicAxes || AXES;
+        cell.textContent = axisArr[adjustedIdx] || '—';
+        cell.dataset.axis = axisArr[adjustedIdx];
+      } else {
+        cell.textContent = '+';
+        cell.onclick = () => toggleFlag(idx);
+      }
+      grid.appendChild(cell);
+    }
+  }
+}
+
+function toggleFlag(idx) {
+  if (state.mandala.cells[idx] === undefined) return;
+  const cell = document.querySelector(`.mandala-cell[data-idx="${idx}"]`);
+  if (!cell || cell.className.includes('center')) return;
+  if (state.mandala.flagged.has(idx)) {
+    state.mandala.flagged.delete(idx);
+    cell.classList.remove('flagged');
+  } else {
+    state.mandala.flagged.add(idx);
+    cell.classList.add('flagged');
+  }
+  updateFlagSummary();
+}
+
+function updateFlagSummary() {
+  const card = document.getElementById('flagSummaryCard');
+  const list = document.getElementById('flagSummaryList');
+  if (state.mandala.flagged.size === 0) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+  let html = '<div style="display:flex; flex-wrap:wrap; gap:6px;">';
+  state.mandala.flagged.forEach(idx => {
+    const text = state.mandala.cells[idx];
+    if (text) html += `<span class="打ち手-tag">${text}</span>`;
+  });
+  html += '</div>';
+  list.innerHTML = html;
+}
+
+function clearFlags() {
+  state.mandala.flagged.clear();
+  document.querySelectorAll('.mandala-cell.flagged').forEach(c => c.classList.remove('flagged'));
+  updateFlagSummary();
+}
+
+// ── STEP A → B: START INTERVIEW ──
+async function startInterview() {
+  const apiKey = state.apiKey || document.getElementById('apiKey').value.trim();
+  const theme = document.getElementById('mandalaTheme').value.trim();
+  if (!apiKey) { alert('APIキーを入力してください。'); return; }
+  if (!theme) { alert('テーマを入力してください。'); return; }
+
+  state.apiKey = apiKey;
+  state.theme = theme;
+
+  const btn = document.getElementById('interviewBtn');
+  const btnText = document.getElementById('interviewBtnText');
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span> 質問を生成中…';
+
+  const prompt = `あなたは問題解決のファシリテーターです。
+ユーザーが「${theme}」という課題を持っています。
+
+この課題をより深く理解するために、的確な質問を2つだけ生成してください。
+質問の目的は「誰の・どんな文脈の課題か」「ゴール・理想状態は何か」を明確にすることです。
+
+JSONのみで返してください：
+{
+  "q1": "質問文1（課題の主体・文脈を明確にする質問）",
+  "q2": "質問文2（ゴール・理想状態を明確にする質問）"
+}
+JSONのみ、説明不要。`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const raw = data.content[0].text.replace(/```json|```/g, '').trim();
+    const qs = JSON.parse(raw);
+    state.interviewQuestions = qs;
+
+    // Render Step B
+    const qArea = document.getElementById('interview-questions');
+    qArea.innerHTML = `
+      <div class="interview-q">
+        <div class="q-label">Q1</div>
+        <div class="q-text">${qs.q1}</div>
+        <textarea id="ans1" placeholder="自由に答えてください…"></textarea>
+      </div>
+      <div class="interview-q">
+        <div class="q-label">Q2</div>
+        <div class="q-text">${qs.q2}</div>
+        <textarea id="ans2" placeholder="自由に答えてください…"></textarea>
+      </div>
+    `;
+
+    document.getElementById('step-a-card').style.display = 'none';
+    document.getElementById('step-b-card').style.display = 'block';
+
+  } catch(e) {
+    alert('エラー: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = '文脈をヒアリング →';
+  }
+}
+
+function backToStepA() {
+  document.getElementById('step-b-card').style.display = 'none';
+  document.getElementById('step-a-card').style.display = 'block';
+}
+
+// ── EXPAND MANDALA (with context) ──
+async function expandMandala() {
+  const apiKey = state.apiKey || document.getElementById('apiKey').value.trim();
+  if (!apiKey) { alert('APIキーを入力してください。'); return; }
+
+  const ans1 = (document.getElementById('ans1')?.value || '').trim();
+  const ans2 = (document.getElementById('ans2')?.value || '').trim();
+  const qs = state.interviewQuestions || {};
+
+  const btn = document.getElementById('expandBtn');
+  const btnText = document.getElementById('expandBtnText');
+
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span> 軸を設計中…';
+
+  // Show Step C
+  document.getElementById('step-b-card').style.display = 'none';
+  document.getElementById('step-c-card').style.display = 'block';
+  initMandala();
+  const status = document.getElementById('mandalaStatus');
+  status.className = 'output-box streaming';
+  status.textContent = 'AIがあなたの文脈に合った軸を設計し、マンダラを展開しています…';
+
+  const context = `テーマ：${state.theme}
+質問1「${qs.q1 || ''}」への回答：${ans1 || '（未回答）'}
+質問2「${qs.q2 || ''}」への回答：${ans2 || '（未回答）'}`;
+
+  const prompt = `あなたは問題解決の専門家です。
+以下の文脈をもとに、マンダラチャート用の8つの軸を設計し、各軸8個の要素を展開してください。
+
+${context}
+
+【重要】軸は汎用的な「ヒト・組織・モノ」ではなく、この文脈に最適化した軸を設計してください。
+例：個人スキル課題なら「スキル・環境・習慣・サポート・情報・時間・心理・仕組み」など。
+組織・文化的課題なら「文化・制度・リーダー・コミュニケーション・ツール・評価・学習・外部」など。
+
+JSONのみで返してください：
+{
+  "axes": ["軸1","軸2","軸3","軸4","軸5","軸6","軸7","軸8"],
+  "軸1の名前": ["要素1","要素2","要素3","要素4","要素5","要素6","要素7","要素8"],
+  "軸2の名前": [...],
+  ...（軸8まで）
+}
+各要素は10文字以内。JSONのみ、説明不要。`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1800,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const raw = data.content[0].text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(raw);
+    const dynamicAxes = parsed.axes || AXES;
+
+    // Update global AXES for this session
+    state.dynamicAxes = dynamicAxes;
+
+    // Show axis tags
+    const tagRow = document.getElementById('axisTagRow');
+    tagRow.innerHTML = dynamicAxes.map(a => `<span class="axis-tag">${a}</span>`).join('');
+
+    // Fill mandala
+    state.mandala.cells = new Array(81).fill(undefined);
+    const blockOrder = [
+      [0,0],[0,1],[0,2],
+      [1,0],      [1,2],
+      [2,0],[2,1],[2,2]
+    ];
+
+    dynamicAxes.forEach((axis, axisIdx) => {
+      const [bRow, bCol] = blockOrder[axisIdx];
+      const items = parsed[axis] || [];
+      const subCenterIdx = (bRow*3+1)*9 + (bCol*3+1);
+      state.mandala.cells[subCenterIdx] = axis;
+      const surround = [];
+      for (let dr = 0; dr < 3; dr++) {
+        for (let dc = 0; dc < 3; dc++) {
+          if (dr === 1 && dc === 1) continue;
+          surround.push((bRow*3+dr)*9 + (bCol*3+dc));
+        }
+      }
+      surround.forEach((cellIdx, i) => {
+        state.mandala.cells[cellIdx] = items[i] || '';
+      });
+    });
+
+    const mainCenterIdx = (1*3+1)*9 + (1*3+1);
+    state.mandala.cells[mainCenterIdx] = state.theme;
+
+    renderMandala();
+
+    status.className = 'output-box';
+    status.textContent = `✅ 展開完了！気になるセルをクリックして★フラグを立ててください。`;
+
+  } catch (e) {
+    status.className = 'output-box';
+    status.textContent = `❌ エラー: ${e.message}`;
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = 'この内容でマンダラを展開する';
+  }
+}
+
+function renderMandala() {
+  const cells = document.querySelectorAll('.mandala-cell');
+  cells.forEach(cell => {
+    const idx = parseInt(cell.dataset.idx);
+    const row = parseInt(cell.dataset.row);
+    const col = parseInt(cell.dataset.col);
+    const bRow = Math.floor(row / 3);
+    const bCol = Math.floor(col / 3);
+    const isCenter = (row % 3 === 1 && col % 3 === 1);
+    const isCenterBlock = (bRow === 1 && bCol === 1);
+
+    if (isCenterBlock && isCenter) {
+      cell.className = 'mandala-cell center-main';
+      cell.textContent = state.theme;
+      return;
+    }
+    if (isCenter) {
+      cell.className = 'mandala-cell center-sub';
+      const axisIdx = bRow * 3 + bCol;
+      const adjusted = axisIdx > 4 ? axisIdx - 1 : axisIdx;
+      cell.textContent = (state.dynamicAxes || AXES)[adjusted];
+      return;
+    }
+
+    const text = state.mandala.cells[idx];
+    if (text) {
+      cell.className = 'mandala-cell';
+      if (state.mandala.flagged.has(idx)) cell.classList.add('flagged');
+      cell.textContent = text;
+      cell.onclick = () => toggleFlag(idx);
+    } else {
+      cell.className = 'mandala-cell empty-slot';
+      cell.textContent = '';
+    }
+  });
+}
+
+// ── PHASE TRANSITIONS ──
+function switchPhase(n) {
+  document.querySelectorAll('.phase-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.phase-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`panel-${n}`).classList.add('active');
+  document.querySelector(`.phase-tab[data-phase="${n}"]`).classList.add('active');
+}
+
+function proceedToPhase1() {
+  // Inherit theme and flagged items
+  const flaggedItems = [...state.mandala.flagged].map(i => state.mandala.cells[i]).filter(Boolean);
+  const inherit = document.getElementById('inheritedTheme');
+  inherit.className = 'output-box';
+  inherit.textContent = `テーマ：${state.theme}\n\n★ 打ち手候補：\n${flaggedItems.length > 0 ? flaggedItems.map(i => '・'+i).join('\n') : '（フラグなし）'}`;
+  switchPhase(1);
+}
+
+function proceedToPhase2() {
+  state.hearing = {
+    who: document.getElementById('hearWho').value,
+    when: document.getElementById('hearWhen').value,
+    problem: document.getElementById('hearProblem').value,
+    ideal: document.getElementById('hearIdeal').value,
+    tried: document.getElementById('hearTried').value
+  };
+  document.getElementById('goal-who').textContent = state.hearing.who || '（未入力）';
+  document.getElementById('goal-problem').textContent = state.hearing.problem || '（未入力）';
+  document.getElementById('goal-ideal').textContent = state.hearing.ideal || '（未入力）';
+  switchPhase(2);
+}
+
+function proceedToPhase3() {
+  switchPhase(3);
+}
+
+// ── HYPOTHESIS GENERATION (API Call 1) ──
+async function generateHypothesis() {
+  const apiKey = state.apiKey || document.getElementById('apiKey').value.trim();
+  if (!apiKey) { alert('APIキーを入力してください。'); return; }
+
+  const flaggedItems = [...state.mandala.flagged].map(i => state.mandala.cells[i]).filter(Boolean);
+  const btn = document.getElementById('hypothesisBtn');
+  const btnText = document.getElementById('hypothesisBtnText');
+  const output = document.getElementById('hypothesisOutput');
+
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span> 生成中…';
+  output.className = 'output-box streaming';
+  output.textContent = '';
+
+  const prompt = `以下の情報をもとに、問題解決のための仮説と検証すべき分析を提案してください。
+
+テーマ：${state.theme}
+課題オーナー：${state.hearing.who}
+課題の詳細：${state.hearing.problem}
+理想状態：${state.hearing.ideal}
+これまでに試したこと：${state.hearing.tried}
+ブレストで特定した候補要因：${flaggedItems.join('、') || 'なし'}
+
+以下の形式で出力してください：
+
+【仮説】
+・最も可能性が高い根本原因の仮説を3つ
+
+【検証すべき分析】
+・仮説を検証するために収集・分析すべき情報
+
+【打ち手の方向性】
+・仮説に基づく打ち手の方向性（ヒト・モノ・仕組みの観点から）`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    state.hypothesis = data.content[0].text;
+    output.className = 'output-box';
+    output.textContent = state.hypothesis;
+  } catch(e) {
+    output.className = 'output-box';
+    output.textContent = `❌ エラー: ${e.message}`;
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = '仮説を生成する';
+  }
+}
+
+// ── MATRIX GENERATION (API Call 2) ──
+async function generateMatrix() {
+  const apiKey = state.apiKey || document.getElementById('apiKey').value.trim();
+  if (!apiKey) { alert('APIキーを入力してください。'); return; }
+
+  const flaggedItems = [...state.mandala.flagged].map(i => state.mandala.cells[i]).filter(Boolean);
+  const btn = document.getElementById('matrixBtn');
+  const btnText = document.getElementById('matrixBtnText');
+
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span> 分類中…';
+
+  const prompt = `以下の情報をもとに、打ち手を効果と実行しやすさで分類してください。
+
+テーマ：${state.theme}
+課題：${state.hearing.problem}
+理想状態：${state.hearing.ideal}
+仮説と方向性：${state.hypothesis}
+打ち手候補：${flaggedItems.join('、') || '（自動生成）'}
+
+JSONのみで返してください：
+{
+  "A": [{"action":"打ち手","reason":"理由","isApp":true}],
+  "B": [{"action":"打ち手","reason":"理由","isApp":false}],
+  "C": [{"action":"打ち手","reason":"理由","isApp":false}],
+  "D": [{"action":"打ち手","reason":"理由","isApp":false}]
+}
+
+isApp は「アプリで対応可能か」をbooleanで。各象限に2〜3個。JSONのみ、説明不要。`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const raw = data.content[0].text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(raw);
+    state.matrix = parsed;
+    renderMatrix(parsed);
+  } catch(e) {
+    alert('エラー: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = 'AIで打ち手を分類する';
+  }
+}
+
+function renderMatrix(data) {
+  ['A','B','C','D'].forEach(q => {
+    const el = document.getElementById(`quad-${q}`);
+    const items = data[q] || [];
+    el.innerHTML = items.map(item => {
+      const appClass = item.isApp ? ' app-flag' : '';
+      const appBadge = item.isApp ? ' 🔧' : '';
+      return `<span class="打ち手-tag${appClass}" title="${item.reason}">${item.action}${appBadge}</span>`;
+    }).join('');
+  });
+}
+
+// ── SPEC GENERATION ──
+async function generateSpec() {
+  const apiKey = state.apiKey || document.getElementById('apiKey').value.trim();
+  if (!apiKey) { alert('APIキーを入力してください。'); return; }
+
+  const btn = document.getElementById('specBtn');
+  const btnText = document.getElementById('specBtnText');
+  const output = document.getElementById('specOutput');
+
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span> 生成中…';
+
+  // Collect app-eligible actions
+  const appActions = [];
+  ['A','B','C','D'].forEach(q => {
+    (state.matrix[q] || []).forEach(item => {
+      if (item.isApp) appActions.push(item.action);
+    });
+  });
+
+  const prompt = `以下の問題解決プロセスの結果に基づいて、アプリの要件定義書を作成してください。
+
+テーマ：${state.theme}
+課題オーナー：${state.hearing.who}
+課題：${state.hearing.problem}
+理想状態：${state.hearing.ideal}
+アプリ対応可能な打ち手：${appActions.join('、') || '要検討'}
+仮説・方向性：${state.hypothesis.substring(0,300)}
+
+以下のJSONフォーマットで出力してください：
+{
+  "appName": "アプリ名（日本語・英語）",
+  "tagline": "キャッチコピー",
+  "targetUser": "ターゲットユーザー",
+  "coreFeatures": [
+    {"feature": "機能名", "description": "概要", "priority": "高/中/低"}
+  ],
+  "hypothesis": "検証したい仮説",
+  "techStack": "技術スタック案"
+}
+JSONのみ。`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const raw = data.content[0].text.replace(/```json|```/g, '').trim();
+    const spec = JSON.parse(raw);
+    state.spec = spec;
+    renderSpec(spec);
+  } catch(e) {
+    output.innerHTML = `<div class="output-box">❌ エラー: ${e.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = '要件定義を生成する';
+  }
+}
+
+function renderSpec(spec) {
+  const output = document.getElementById('specOutput');
+  let html = `
+    <table class="spec-table">
+      <tr><th colspan="2">📋 アプリ要件定義（初稿）</th></tr>
+      <tr><td style="width:140px; font-weight:700;">アプリ名</td><td>${spec.appName || '—'}</td></tr>
+      <tr><td style="font-weight:700;">キャッチコピー</td><td>${spec.tagline || '—'}</td></tr>
+      <tr><td style="font-weight:700;">ターゲット</td><td>${spec.targetUser || '—'}</td></tr>
+      <tr><td style="font-weight:700;">検証仮説</td><td>${spec.hypothesis || '—'}</td></tr>
+      <tr><td style="font-weight:700;">技術スタック</td><td>${spec.techStack || '—'}</td></tr>
+    </table>
+    <br>
+    <table class="spec-table">
+      <tr><th>コア機能</th><th>概要</th><th style="width:60px;">優先度</th></tr>
+  `;
+  (spec.coreFeatures || []).forEach(f => {
+    html += `<tr><td style="font-weight:700;">${f.feature}</td><td>${f.description}</td><td style="text-align:center;">${f.priority}</td></tr>`;
+  });
+  html += '</table>';
+  output.innerHTML = html;
+}
+
+// ── EXPORT ──
+function exportMarkdown() {
+  const flaggedItems = [...state.mandala.flagged].map(i => state.mandala.cells[i]).filter(Boolean);
+  const snapMemo = document.getElementById('snapMemo')?.value || '';
+  const now = new Date().toLocaleDateString('ja-JP');
+
+  let md = `# 課題解決ナビゲーター #023 — セッション記録\n`;
+  md += `> 📸 **これは ${now} 時点のスナップショットです。**\n`;
+  md += `> このドキュメントは出発点であって答えではありません。いつでも書き換えていい。\n\n`;
+  md += `---\n\n`;
+  md += `## Phase 0：ブレスト\n**テーマ：** ${state.theme}\n\n**★ 打ち手候補：** ${flaggedItems.join('、') || 'なし'}\n\n`;
+  md += `## Phase 1：ヒアリング\n- **WHO：** ${state.hearing.who}\n- **課題：** ${state.hearing.problem}\n- **理想状態：** ${state.hearing.ideal}\n- **試したこと：** ${state.hearing.tried}\n\n`;
+  md += `## Phase 2：仮説\n${state.hypothesis}\n\n`;
+  if (state.spec) {
+    md += `## Phase 3：要件定義\n- **アプリ名：** ${state.spec.appName}\n- **キャッチコピー：** ${state.spec.tagline}\n- **ターゲット：** ${state.spec.targetUser}\n\n`;
+  }
+  md += `---\n\n`;
+  md += `## 📝 帰ってから気づいたこと・変わったこと\n\n`;
+  md += snapMemo
+    ? snapMemo + '\n'
+    : '_（散歩中、ご飯のあと、眠れない夜に。気づいたことをここに書き足してください。）_\n';
+  md += `\n---\n`;
+  md += `_「あ、違うかも」と思ったら、それが本物。このドキュメントはいつでも更新していい。_\n`;
+
+  const blob = new Blob([md], {type:'text/markdown'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `QQ023_snapshot_${Date.now()}.md`;
+  a.click();
+}
+
+function resetAll() {
+  if (!confirm('セッションをリセットしますか？')) return;
+  location.reload();
+}
+
+// ── INIT ──
+window.addEventListener('load', () => {
+  document.getElementById('apiKey').addEventListener('input', (e) => {
+    state.apiKey = e.target.value.trim();
+  });
+  const snapDate = document.getElementById('snapDate');
+  if (snapDate) snapDate.textContent = new Date().toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric'});
+  initMandala();
+});
+</script>
+</body>
+</html>
